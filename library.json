@@ -1,0 +1,19 @@
+{
+    "name": "q",
+    "version": "0.0.1",
+    "build": {
+        "srcDir": "./",
+        "srcFilter": [
+            "+<q_io/include>",
+            "+<q_lib/include>",
+            "+<infra/include>"
+        ],
+        "flags": [
+            "-std=gnu++14",
+            "-fexceptions",
+            "-Iq_io/include",
+            "-Iq_lib/include",
+            "-Iinfra/include"
+        ]
+    }
+}
