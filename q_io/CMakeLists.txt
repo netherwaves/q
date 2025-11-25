@@ -1,11 +1,11 @@
 ###############################################################################
-#  Copyright (c) 2014-2021 Joel de Guzman. All rights reserved.
+#  Copyright (c) 2014-2023 Joel de Guzman. All rights reserved.
 #
 #  Distributed under the MIT License (https://opensource.org/licenses/MIT)
 ###############################################################################
-cmake_minimum_required(VERSION 3.5.1)
+cmake_minimum_required(VERSION 3.16.0)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 project(libqio)
@@ -16,15 +16,36 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang"
    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-deprecated-declarations")
 endif()
 
-option(PA_BUILD_SHARED "Build shared/dynamic library" OFF)
-add_subdirectory(external/portaudio)
-add_subdirectory(external/portmidi)
-set(PORTMIDI_INCLUDE_DIR external/portmidi/pm_common/)
-set(PORTAUDIO_INCLUDE_DIR external/portaudio/include/)
-set(PORTAUDIO_LIBRARY portaudio_static)
-set(PORTMIDI_LIBRARY portmidi)
+option(BUILD_SHARED_LIBS "Build shared/dynamic library" OFF)
 
-add_library(libqio
+###############################################################################
+# portaudio
+
+FetchContent_Declare(
+  portaudio
+  GIT_REPOSITORY https://github.com/PortAudio/portaudio.git
+  GIT_TAG master
+  GIT_SUBMODULES_RECURSE ON
+)
+
+FetchContent_MakeAvailable(portaudio)
+
+###############################################################################
+# portmidi
+
+FetchContent_Declare(
+  portmidi
+  GIT_REPOSITORY https://github.com/PortMidi/portmidi.git
+  GIT_TAG v2.0.4
+  GIT_SUBMODULES_RECURSE ON
+)
+
+FetchContent_MakeAvailable(portmidi)
+
+###############################################################################
+# libqio
+
+add_library(libqio STATIC
    src/audio_file.cpp
    src/audio_device.cpp
    src/audio_stream.cpp
@@ -35,8 +56,8 @@ add_library(libqio
 target_link_libraries(libqio
    libq
    cycfi::infra
-   ${PORTMIDI_LIBRARY}
-   ${PORTAUDIO_LIBRARY}
+   portmidi
+   portaudio
 )
 
 if (APPLE)
@@ -50,8 +71,6 @@ endif()
 
 target_include_directories(libqio
    PRIVATE external/include/
-   PRIVATE ${PORTAUDIO_INCLUDE_DIR}
-   PRIVATE ${PORTMIDI_INCLUDE_DIR}
    PUBLIC include/
 )
 

@@ -1,5 +1,5 @@
 /*=============================================================================
-   Copyright (c) 2014-2021 Joel de Guzman. All rights reserved.
+   Copyright (c) 2014-2024 Joel de Guzman. All rights reserved.
 
    Distributed under the MIT License [ https://opensource.org/licenses/MIT ]
 =============================================================================*/
@@ -10,6 +10,7 @@
 #include <q/utility/bitset.hpp>
 #include <q/utility/ring_buffer.hpp>
 #include <q/support/decibel.hpp>
+#include <q/support/frequency.hpp>
 #include <infra/assert.hpp>
 #include <cmath>
 
@@ -78,7 +79,7 @@ namespace cycfi::q
          float             _width = 0.0f;
       };
 
-                           zero_crossing_collector(decibel hysteresis, duration window, std::uint32_t sps);
+                           zero_crossing_collector(decibel hysteresis, duration window, float sps);
                            zero_crossing_collector(decibel hysteresis, std::uint32_t window);
                            zero_crossing_collector(zero_crossing_collector const& rhs) = default;
                            zero_crossing_collector(zero_crossing_collector&& rhs) = default;
@@ -128,13 +129,13 @@ namespace cycfi::q
       }
    }
 
-   inline zero_crossing_collector::zero_crossing_collector(decibel hysteresis, duration window, std::uint32_t sps)
+   inline zero_crossing_collector::zero_crossing_collector(decibel hysteresis, duration window, float sps)
     : zero_crossing_collector{hysteresis, std::uint32_t(as_double(window) * sps)}
    {
    }
 
    inline zero_crossing_collector::zero_crossing_collector(decibel hysteresis, std::uint32_t window)
-    : _hysteresis(-as_float(hysteresis))
+    : _hysteresis(-lin_float(hysteresis))
     , _window_size(detail::adjust_window_size(window) * bitset<>::value_size)
     , _info(_window_size / 2)
    {}
@@ -315,7 +316,7 @@ namespace cycfi::q
       _info[0]._leading_edge -= n;
       if (!_state)
          _info[0]._trailing_edge -= n;
-      auto i = 1;
+      std::size_t i = 1;
       for (; i != _num_edges; ++i)
       {
          _info[i]._leading_edge -= n;

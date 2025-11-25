@@ -1,5 +1,5 @@
 /*=============================================================================
-   Copyright (c) 2014-2021 Joel de Guzman. All rights reserved.
+   Copyright (c) 2014-2024 Joel de Guzman. All rights reserved.
 
    Distributed under the MIT License [ https://opensource.org/licenses/MIT ]
 =============================================================================*/
@@ -29,7 +29,7 @@ namespace cycfi::q
       {}
 
       window_comparator(decibel low, decibel high)
-       : _low(as_float(low)), _high(as_float(high))
+       : _low(lin_float(low)), _high(lin_float(high))
       {}
 
       bool operator()(float s)
@@ -60,8 +60,8 @@ namespace cycfi::q
 
       void threshold(decibel low, decibel high)
       {
-         _low = as_float(low);
-         _high = as_float(high);
+         _low = lin_float(low);
+         _high = lin_float(high);
       }
 
       float _low, _high;

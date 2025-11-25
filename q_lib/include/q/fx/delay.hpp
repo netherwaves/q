@@ -1,5 +1,5 @@
 /*=============================================================================
-   Copyright (c) 2014-2021 Joel de Guzman. All rights reserved.
+   Copyright (c) 2014-2024 Joel de Guzman. All rights reserved.
 
    Distributed under the MIT License [ https://opensource.org/licenses/MIT ]
 =============================================================================*/
@@ -7,6 +7,7 @@
 #define CYCFI_Q_DELAY_JULY_20_2014
 
 #include <q/utility/fractional_ring_buffer.hpp>
+#include <q/support/duration.hpp>
 #include <q/support/base.hpp>
 
 namespace cycfi::q
@@ -74,12 +75,16 @@ namespace cycfi::q
    public:
 
       using base_type = Base;
+      using value_type = typename Base::value_type;
+      using storage_type = typename Base::storage_type;
+      using index_type = typename Base::index_type;
+      using interpolation_type = typename Base::interpolation_type;
 
-      basic_delay(duration max_delay, std::uint32_t sps)
+      basic_delay(duration max_delay, float sps)
        : base_type(std::size_t(std::ceil(as_double(max_delay) * sps)))
       {}
 
-      basic_delay(std::size_t max_delay_samples)
+      explicit basic_delay(std::size_t max_delay_samples)
        : base_type(std::size_t(max_delay_samples))
       {}
 
@@ -90,18 +95,16 @@ namespace cycfi::q
       }
 
       // Get the delayed signal.
-      template <typename Index>
-      float operator()(Index i) const
+      float operator()(index_type i) const
       {
          return (*this)[i];
       }
 
-      // Push a new signal and return the delayed signal. This is the
-      // simplest (common) case for single delays. For multi-tapped delays,
-      // you need to access the individual delays using the indexing operator
-      // for various tap-points before pushing the latest sample.
-      template <typename Index>
-      float operator()(float val, Index i)
+      // Push a new signal and return the delayed signal at index `i+1`. This
+      // is the simplest (common) case for single delays. For multi-tapped
+      // delays, you need to access the individual delays using the indexing
+      // operator for various tap-points before pushing the latest sample.
+      float operator()(value_type val, index_type i)
       {
          float delayed = (*this)[i];
          this->push(val);

@@ -1,5 +1,5 @@
 /*=============================================================================
-   Copyright (c) 2014-2021 Joel de Guzman. All rights reserved.
+   Copyright (c) 2014-2024 Joel de Guzman. All rights reserved.
 
    Distributed under the MIT License [ https://opensource.org/licenses/MIT ]
 =============================================================================*/
@@ -8,6 +8,7 @@
 #include <q_io/audio_stream.hpp>
 #include <q_io/audio_file.hpp>
 #include "example.hpp"
+#include <q/utility/sleep.hpp>
 
 ///////////////////////////////////////////////////////////////////////////////
 // Same as delay.cpp, but taking inut from audio interface (channel 1)
@@ -16,14 +17,14 @@
 namespace q = cycfi::q;
 using namespace q::literals;
 
-struct delay_processor : q::port_audio_stream
+struct delay_processor : q::audio_stream
 {
    delay_processor(
       int device_id
     , q::duration delay
     , float feedback
    )
-    : port_audio_stream(q::audio_device::get(device_id), 1, 2)
+    : audio_stream(q::audio_device::get(device_id), 1, 2)
     , _delay(delay, sampling_rate())
     , _feedback(feedback)
    {}
@@ -33,7 +34,7 @@ struct delay_processor : q::port_audio_stream
       auto left = out[0];
       auto right = out[1];
       auto ch0 = in[0];
-      for (auto frame : out.frames())
+      for (auto frame : out.frames)
       {
          // Get the next input sample
          auto s = ch0[frame];

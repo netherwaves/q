@@ -1,5 +1,5 @@
 /*=============================================================================
-   Copyright (c) 2014-2020 Joel de Guzman. All rights reserved.
+   Copyright (c) 2014-2024 Joel de Guzman. All rights reserved.
 
    Distributed under the MIT License [ https://opensource.org/licenses/MIT ]
 =============================================================================*/
@@ -27,7 +27,7 @@ namespace cycfi::q
                               pitch_detector(
                                  frequency lowest_freq
                                , frequency highest_freq
-                               , std::uint32_t sps
+                               , float sps
                                , decibel hysteresis
                               );
 
@@ -58,7 +58,7 @@ namespace cycfi::q
       float                   _frequency;
       median3                 _median;
       median3                 _predict_median;
-      std::uint32_t           _sps;
+      float                   _sps;
       std::size_t             _frames_after_shift = 0;
    };
 
@@ -68,7 +68,7 @@ namespace cycfi::q
    inline pitch_detector::pitch_detector(
        q::frequency lowest_freq
      , q::frequency highest_freq
-     , std::uint32_t sps
+     , float sps
      , decibel hysteresis
    )
      : _pd{ lowest_freq, highest_freq, sps, hysteresis }

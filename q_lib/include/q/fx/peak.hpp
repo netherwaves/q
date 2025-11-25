@@ -1,5 +1,5 @@
 /*=============================================================================
-   Copyright (c) 2014-2021 Joel de Guzman. All rights reserved.
+   Copyright (c) 2014-2024 Joel de Guzman. All rights reserved.
 
    Distributed under the MIT License [ https://opensource.org/licenses/MIT ]
 =============================================================================*/
@@ -17,8 +17,8 @@ namespace cycfi::q
    // is accomplished by comparing the signal with the (slightly attenuated)
    // envelope of the signal (env) using a schmitt_trigger.
    //
-   //    sensitivity: Envelope droop amount (attenuation) hysteresis:
-   //    schmitt_trigger hysteresis amount
+   //    sensitivity: Envelope droop amount (attenuation)
+   //    hysteresis: schmitt_trigger hysteresis amount
    //
    // The result is a bool corresponding to the peaks. Tip: For measuring
    // periods, look at the falling edges (i.e. the transitions from high to
@@ -32,7 +32,7 @@ namespace cycfi::q
       {}
 
       peak(float sensitivity, decibel hysteresis)
-       : _sensitivity(sensitivity), _cmp(as_float(hysteresis))
+       : _sensitivity(sensitivity), _cmp(lin_float(hysteresis))
       {}
 
       bool operator()(float s, float env)

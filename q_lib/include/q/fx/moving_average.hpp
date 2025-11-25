@@ -1,5 +1,5 @@
 /*=============================================================================
-   Copyright (c) 2014-2021 Joel de Guzman. All rights reserved.
+   Copyright (c) 2014-2024 Joel de Guzman. All rights reserved.
 
    Distributed under the MIT License [ https://opensource.org/licenses/MIT ]
 =============================================================================*/
@@ -20,21 +20,21 @@ namespace cycfi::q
    // domain. The moving average filter is optimal in reducing random noise
    // while retaining a sharp step response.
    //
-   // Averaging N samples (the moving average length) increases the SNR by
-   // the square root of N. For example, N=16 improves SNR by 4 (12dB). The
-   // filter delay is exactly (N−1)/2.
+   // Averaging N samples (the moving average window size) increases the SNR
+   // by the square root of N. For example, N=16 improves SNR by 4 (12dB).
+   // The filter delay is exactly (N−1)/2.
    //
-   // This filter is implemented using a ring_buffer. The data type, T, is a
-   // template parameter, allowing both floating point as well as integer
-   // computations. Integers are typically faster than floating point and are
-   // not prone to round-off errors.
+   // The data type, T, is a template parameter, allowing both floating point
+   // as well as integer computations. Integers are typically faster than
+   // floating point and are not prone to round-off errors.
    //
-   // moving_average is based on the moving_sum. See above.
+   // moving_average is a subclass of the moving_sum.
    ////////////////////////////////////////////////////////////////////////////
    template <typename T>
    struct basic_moving_average : basic_moving_sum<T>
    {
       using basic_moving_sum<T>::basic_moving_sum;
+      using value_type = T;
 
       T operator()(T s)
       {
@@ -44,7 +44,7 @@ namespace cycfi::q
 
       T operator()() const
       {
-          // Return the average
+         // Return the average
          return this->sum() / this->size();
       }
    };
@@ -109,14 +109,9 @@ namespace cycfi::q
        , b_(1.0f - b)
       {}
 
-      rt_exp_moving_average(duration d, std::size_t sps, float y_ = 0.0f)
+      rt_exp_moving_average(duration d, float sps, float y_ = 0.0f)
        : rt_exp_moving_average(std::size_t(sps * as_float(d)), y_)
       {}
-
-      void length(std::size_t n)
-      {
-         b = 2.0f / (n + 1);
-      }
 
       float operator()(float s)
       {
@@ -139,8 +134,8 @@ namespace cycfi::q
          b = 2.0f / (n + 1);
       }
 
-      float b, b_;
       float y = 0.0f;
+      float b, b_;
    };
 
    ////////////////////////////////////////////////////////////////////////////
@@ -148,13 +143,11 @@ namespace cycfi::q
    ////////////////////////////////////////////////////////////////////////////
    struct moving_average2
    {
-      moving_average2(float y_ = 0.0f)
-       : y(y_)
-      {}
-
       float operator()(float s)
       {
-         return y = (s + y) / 2;
+         y = (s + _prev) / 2.0f;
+         _prev = s;
+         return y;
       }
 
       float operator()() const
@@ -162,13 +155,8 @@ namespace cycfi::q
          return y;
       }
 
-      moving_average2& operator=(float y_)
-      {
-         y = y_;
-         return *this;
-      }
-
       float y = 0.0f;
+      float _prev= 0.0f;
    };
 }
 

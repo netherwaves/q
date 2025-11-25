@@ -1,5 +1,5 @@
 /*=============================================================================
-   Copyright (c) 2014-2021 Joel de Guzman. All rights reserved.
+   Copyright (c) 2014-2024 Joel de Guzman. All rights reserved.
 
    Distributed under the MIT License [ https://opensource.org/licenses/MIT ]
 =============================================================================*/
@@ -41,7 +41,7 @@ namespace cycfi::q
       std::string    _name;
       std::size_t    _input_channels;
       std::size_t    _output_channels;
-      std::size_t    _default_sample_rate;
+      double         _default_sample_rate;
 
       static std::vector<impl> const& get_devices()
       {
@@ -55,41 +55,39 @@ namespace cycfi::q
          PaDeviceInfo const* info;
          for (auto i = 0; i < num_devices; ++i)
          {
-             info = Pa_GetDeviceInfo(i);
-             audio_device::impl impl;
-             impl._id = i;
-             // copy cheap data over
-             impl._input_channels = info->maxInputChannels;
-             impl._output_channels = info->maxOutputChannels;
-             impl._default_sample_rate = info->defaultSampleRate;
-             if (info->maxInputChannels || info->maxOutputChannels)
-             {   
-                 if (i >= devices.size()) {
-                     impl._name = info->name;
-                     devices.push_back(impl);
-                 } else if (devices[i]._name == info->name) {
-                     //device names are unique? change data in place (avoid string copy)
-                     devices[i]._id = impl._id;
-                     devices[i]._input_channels = impl._input_channels;
-                     devices[i]._output_channels = impl._output_channels;
-                     devices[i]._default_sample_rate = impl._default_sample_rate;
-                 } else {
-                     //overwrite current device at index
-                     devices[i]._id = impl._id;
-                     devices[i]._name = info->name;
-                     devices[i]._input_channels = impl._input_channels;
-                     devices[i]._output_channels = impl._output_channels;
-                     devices[i]._default_sample_rate = impl._default_sample_rate;
-                 }
-             }
+            info = Pa_GetDeviceInfo(i);
+            audio_device::impl impl;
+            impl._id = i;
+            // copy cheap data over
+            impl._input_channels = info->maxInputChannels;
+            impl._output_channels = info->maxOutputChannels;
+            impl._default_sample_rate = info->defaultSampleRate;
+            if (info->maxInputChannels || info->maxOutputChannels)
+            {
+               if (i >= devices.size()) {
+                  impl._name = info->name;
+                  devices.push_back(impl);
+               } else if (devices[i]._name == info->name) {
+                  //device names are unique? change data in place (avoid string copy)
+                  devices[i]._id = impl._id;
+                  devices[i]._input_channels = impl._input_channels;
+                  devices[i]._output_channels = impl._output_channels;
+                  devices[i]._default_sample_rate = impl._default_sample_rate;
+               } else {
+                  //overwrite current device at index
+                  devices[i]._id = impl._id;
+                  devices[i]._name = info->name;
+                  devices[i]._input_channels = impl._input_channels;
+                  devices[i]._output_channels = impl._output_channels;
+                  devices[i]._default_sample_rate = impl._default_sample_rate;
+               }
+            }
          }
-         //discard devices no longer listed by portaudio
-         devices.erase(devices.begin() + num_devices, devices.end());
          return devices;
       }
    };
 
-   uint32_t audio_device::id() const
+   int audio_device::id() const
    {
       return _impl._id;
    }
@@ -109,7 +107,7 @@ namespace cycfi::q
       return _impl._output_channels;
    }
 
-   std::size_t audio_device::default_sample_rate() const
+   double audio_device::default_sample_rate() const
    {
       return _impl._default_sample_rate;
    }

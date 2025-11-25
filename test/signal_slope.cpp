@@ -1,5 +1,5 @@
 /*=============================================================================
-   Copyright (c) 2014-2021 Joel de Guzman. All rights reserved.
+   Copyright (c) 2014-2024 Joel de Guzman. All rights reserved.
 
    Distributed under the MIT License [ https://opensource.org/licenses/MIT ]
 =============================================================================*/
@@ -11,7 +11,7 @@
 
 #include <vector>
 #include <string>
-#include "notes.hpp"
+#include "pitch.hpp"
 
 namespace q = cycfi::q;
 using namespace q::literals;
@@ -19,15 +19,15 @@ using namespace notes;
 
 void process(
    std::string name, std::vector<float> const& in
- , std::uint32_t sps, q::frequency f)
+ , float sps, q::frequency f)
 {
    constexpr auto n_channels = 3;
    std::vector<float> out(in.size() * n_channels);
 
    auto sc_conf = q::signal_conditioner::config{};
    auto sig_cond = q::signal_conditioner{sc_conf, f, f*4, sps};
-   auto vel = q::dt_differentiator{16};
-   auto acc = q::dt_differentiator{16};
+   auto vel = q::slope{16};
+   auto acc = q::slope{16};
 
    for (auto i = 0; i != in.size(); ++i)
    {
@@ -66,7 +66,7 @@ void process(std::string name, q::frequency f)
    // Read audio file
 
    q::wav_reader src{"audio_files/" + name + ".wav"};
-   std::uint32_t const sps = src.sps();
+   float const sps = src.sps();
 
    std::vector<float> in(src.length());
    src.read(in);

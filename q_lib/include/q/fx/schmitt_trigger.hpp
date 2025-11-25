@@ -1,10 +1,10 @@
 /*=============================================================================
-   Copyright (c) 2014-2021 Joel de Guzman. All rights reserved.
+   Copyright (c) 2014-2024 Joel de Guzman. All rights reserved.
 
    Distributed under the MIT License [ https://opensource.org/licenses/MIT ]
 =============================================================================*/
-#if !defined(CYCFI_Q_FEATURE_DETECTION_DECEMBER_7_2018)
-#define CYCFI_Q_FEATURE_DETECTION_DECEMBER_7_2018
+#if !defined(CYCFI_Q_SCHMITT_TRIGGER_DECEMBER_7_2018)
+#define CYCFI_Q_SCHMITT_TRIGGER_DECEMBER_7_2018
 
 #include <q/support/base.hpp>
 #include <q/support/decibel.hpp>
@@ -14,15 +14,10 @@ namespace cycfi::q
 {
    ////////////////////////////////////////////////////////////////////////////
    // The output of a simple comparator is determined by its inputs. The
-   // output is high (1) if the positive input (pos) is greater than the
-   // negative input (neg). Otherwise, the output is low (0).
-   //
-   // The schmitt trigger adds some hysteresis to improve noise immunity and
-   // minimize multiple triggering by adding and subtracting a certain
-   // fraction back to the negative input (neg). Hysteresis is the fraction
-   // (should be less than < 1.0) that determines how much is added or
-   // subtracted. By doing so, the comparator "bar" is raised or lowered
-   // depending on the previous state.
+   // output is `1` if the input signal is greater than the reference signal
+   // plus a specified hysteresis. The output is `0` if the input signal is
+   // less than the reference signal minus the specified hysteresis.
+   // Otherwise, the previous result is retained.
    //
    // Note: the result is a bool.
    ////////////////////////////////////////////////////////////////////////////
@@ -33,14 +28,14 @@ namespace cycfi::q
       {}
 
       schmitt_trigger(decibel hysteresis)
-       : _hysteresis(as_float(hysteresis))
+       : _hysteresis(lin_float(hysteresis))
       {}
 
-      bool operator()(float pos, float neg)
+      bool operator()(float s, float ref)
       {
-         if (!y && pos > (neg + _hysteresis))
+         if (!y && s > (ref + _hysteresis))
             y = 1;
-         else if (y && pos < (neg - _hysteresis))
+         else if (y && s < (ref - _hysteresis))
             y = 0;
          return y;
       }

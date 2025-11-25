@@ -1,5 +1,5 @@
 /*=============================================================================
-   Copyright (c) 2014-2021 Joel de Guzman. All rights reserved.
+   Copyright (c) 2014-2024 Joel de Guzman. All rights reserved.
 
    Distributed under the MIT License [ https://opensource.org/licenses/MIT ]
 =============================================================================*/
@@ -37,6 +37,7 @@ namespace cycfi::q
    struct fixed_pt_leaky_integrator
    {
       typedef T result_type;
+      static constexpr int gain = k;
 
       T operator()(T s)
       {
@@ -67,7 +68,7 @@ namespace cycfi::q
        : a(a)
       {}
 
-      leaky_integrator(frequency f, std::uint32_t sps)
+      leaky_integrator(frequency f, float sps)
        : a(1.0f -(2_pi * as_double(f) / sps))
       {}
 
@@ -87,7 +88,7 @@ namespace cycfi::q
          return *this;
       }
 
-      void cutoff(frequency f, std::uint32_t sps)
+      void cutoff(frequency f, float sps)
       {
          a = 1.0f -(2_pi * as_double(f) / sps);
       }
@@ -104,7 +105,7 @@ namespace cycfi::q
        : a(a)
       {}
 
-      one_pole_lowpass(frequency freq, std::uint32_t sps)
+      one_pole_lowpass(frequency freq, float sps)
        : a(1.0 - fast_exp3(-2_pi * as_double(freq) / sps))
       {}
 
@@ -124,7 +125,7 @@ namespace cycfi::q
          return *this;
       }
 
-      void cutoff(frequency freq, std::uint32_t sps)
+      void cutoff(frequency freq, float sps)
       {
          a = 1.0 - fast_exp3(-2_pi * as_double(freq) / sps);
       }
@@ -155,7 +156,7 @@ namespace cycfi::q
    ////////////////////////////////////////////////////////////////////////////
    struct reso_filter
    {
-      reso_filter(frequency f, float reso, std::uint32_t sps)
+      reso_filter(frequency f, float reso, float sps)
        : _f(2.0f * fastsin(pi * as_float(f) / sps))
        , _fb(reso + reso / (1.0f - _f))
        , _reso(reso)
@@ -179,7 +180,7 @@ namespace cycfi::q
          return _y1;
       }
 
-      void cutoff(frequency f, std::uint32_t sps)
+      void cutoff(frequency f, float sps)
       {
          _f = 2.0f * fastsin(pi * as_float(f) / sps);
          _fb = _reso + _reso / (1.0f - _f);
@@ -203,26 +204,25 @@ namespace cycfi::q
 
    ////////////////////////////////////////////////////////////////////////////
    // dynamic_smoother based on Dynamic Smoothing Using Self Modulating Filter
-   // by Andrew Simper, Cytomic, 2014, andy@cytomic.com
+   // by Andrew Simper, Cytomic, 2016, andy@cytomic.com
    //
    //    https://cytomic.com/files/dsp/DynamicSmoothing.pdf
    //
    // A robust and inexpensive dynamic smoothing algorithm based on using the
-   // bandpass output of a 2 pole multimode filter to modulate its own cutoff
-   // frequency. The bandpass signal is a meaure of how much the signal is
-   // "changing" so is useful to increase the cutoff frequency dynamically
-   // and allow for faster tracking when the input signal is changing more.
-   // The absolute value of the bandpass signal is used since either a change
-   // upwards or downwards should increase the cutoff.
-   //
+   // bandpass output of a 2-pole multimode filter to modulate its own cutoff
+   // frequency. The bandpass signal measures how much the signal is
+   // "changing," making it useful for dynamically increasing the cutoff
+   // frequency and allowing for faster tracking when the input signal
+   // changes more. The absolute value of the bandpass signal is used since
+   // either an upward or downward change should increase the cutoff.
    ////////////////////////////////////////////////////////////////////////////
    struct dynamic_smoother
    {
-      dynamic_smoother(frequency base, std::uint32_t sps)
+      dynamic_smoother(frequency base, float sps)
        : dynamic_smoother(base, 0.5, sps)
       {}
 
-      dynamic_smoother(frequency base, float sensitivity, std::uint32_t sps)
+      dynamic_smoother(frequency base, float sensitivity, float sps)
        : sense(sensitivity * 4.0f)  // efficient linear cutoff mapping
        , wc(as_double(base) / sps)
       {
@@ -238,10 +238,16 @@ namespace cycfi::q
          auto g = std::min(g0 + sense * std::abs(bandz), 1.0f);
          low1 = lowlz + g * (s - lowlz);
          low2 = low2z + g * (low1 - low2z);
-         return low2z;
+         return low2;
       }
 
-      void base_frequency(frequency base, std::uint32_t sps)
+      dynamic_smoother& operator=(float y)
+      {
+         low1 = low2 = y;
+         return *this;
+      }
+
+      void base_frequency(frequency base, float sps)
       {
          wc = as_double(base) / sps;
          auto gc = std::tan(pi * wc);
